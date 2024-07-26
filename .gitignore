@@ -1,4 +1,5 @@
 .vscode/
 build/
 *.spec
-.gitattributes
+theme
+token
