@@ -3,18 +3,47 @@ from gtts import gTTS
 from pygame import mixer
 import time
 import sys
+import librosa
+import soundfile as sf
 
 bot_token = sys.argv[1]
 language = sys.argv[2]
+audio_pitch = int(sys.argv[3])
+
+gTTS(text="ты", lang="ru", slow=False).save('text.mp3')
+file_path = "text.mp3"
+try:
+    audio, sr = librosa.load(file_path, sr=None)
+    print("Аудіофайл завантажено успішно!")
+except Exception as e:
+    print("Помилка при завантаженні аудіофайлу:", e)
+    exit()
 
 bot = telebot.TeleBot(bot_token, parse_mode=None)
 
 def speak(text):
     if text != '' and text != '/start' and text != '/ru' and text != '/uk' and text != '/en' and text != '/help' and text != '/lang':
-        gTTS(text=text,lang=language, slow=False).save('text.mp3')
+        gTTS(text=text, lang=language, slow=False).save('text.mp3')
+        file_path = "text.mp3"
+        try:
+            audio, sr = librosa.load(file_path, sr=None)
+            print("Аудіофайл завантажено успішно!")
+        except Exception as e:
+            print("Помилка при завантаженні аудіофайлу:", e)
+            exit()
+        
+        pitch_shifted_audio = librosa.effects.pitch_shift(y=audio, sr=sr, n_steps=audio_pitch)  # Зміна тону на 2 півтона
 
+        # Збереження зміненого аудіофайлу
+        output_path = "text_pitched.mp3"
+        try:
+            sf.write(output_path, pitch_shifted_audio, sr)
+            print("Змінений аудіофайл збережено успішно!")
+        except Exception as e:
+            print("Помилка при збереженні аудіофайлу:", e)
+        
         mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-        mixer.music.load('text.mp3')
+        mixer.music.load('text_pitched.mp3')
         mixer.music.play()
         while mixer.music.get_busy():  # wait for music to finish playing
             time.sleep(1)

@@ -3,6 +3,8 @@ import time
 from gtts import gTTS
 from pygame import mixer
 import os
+import librosa
+import soundfile as sf
 
 show_token = False
 bot_is_work = False
@@ -17,6 +19,18 @@ except:
         file.write("токен")
         bot_token = "токен"
         file.close()
+
+try:
+    with open("pitch", 'r') as file:
+        audio_pitch = float(file.read().strip())
+        file.close()
+except:
+    with open("pitch", 'w') as file:
+        file.write("1.0")
+        audio_pitch = 1.0
+        file.close()
+
+hear = True
 
 def main(page:Page) -> None:
     page.title = f"TTS to Microphone - {language}"
@@ -133,8 +147,25 @@ def main(page:Page) -> None:
         # Сохранить и воспроизвести аудио
         if text != '':
             gTTS(text=text, lang=language, slow=False).save('text.mp3')
+            file_path = "text.mp3"
+            try:
+                audio, sr = librosa.load(file_path, sr=None)
+                print("Аудіофайл завантажено успішно!")
+            except Exception as e:
+                print("Помилка при завантаженні аудіофайлу:", e)
+            
+            pitch_shifted_audio = librosa.effects.pitch_shift(y=audio, sr=sr, n_steps=audio_pitch)  # Зміна тону на 2 півтона
+
+            # Збереження зміненого аудіофайлу
+            output_path = "text_pitched.mp3"
+            try:
+                sf.write(output_path, pitch_shifted_audio, sr)
+                print("Змінений аудіофайл збережено успішно!")
+            except Exception as e:
+                print("Помилка при збереженні аудіофайлу:", e)
+            
             mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-            mixer.music.load('text.mp3')
+            mixer.music.load('text_pitched.mp3')
             mixer.music.play()
             while mixer.music.get_busy():  # wait for music to finish playing
                 time.sleep(1)
@@ -150,6 +181,9 @@ def main(page:Page) -> None:
         icon_button.disabled = False
         text_field.disabled = False
         page.update()
+
+
+
 
     # Создаем текстовое поле с обработчиком нажатия Enter
     text_field = TextField(
@@ -170,7 +204,7 @@ def main(page:Page) -> None:
             bot_api_apply.icon=icons.CLOUD_OUTLINED
             page.update()
         else:
-            os.system(f"start ttstm_bot.exe \"{bot_token}\" \"{language}\"")
+            os.system(f"start ttstm_bot.exe \"{bot_token}\" \"{language}\" {int(audio_pitch)}")
             bot_is_work = True
             bot_api_apply.icon=icons.CLOUD
             page.update()
@@ -251,8 +285,21 @@ def main(page:Page) -> None:
     language_icon =Icon(icons.LANGUAGE, color="black" if page.theme_mode == ThemeMode.LIGHT else "white")
     install_desk_icon = Icon(icons.INSTALL_DESKTOP, color="black" if page.theme_mode == ThemeMode.LIGHT else "white")
 
+    def update_audio_pitch(e):
+        global audio_pitch
+        audio_pitch = e.control.value
+        print(audio_pitch)
+        settings.items[0].content.value = f"Pitch: {audio_pitch}" #type: ignore
+        with open("pitch", 'w') as file:
+            file.write(str(audio_pitch))
+            file.close()
+        page.update()
+
     settings = PopupMenuButton(
         items=[
+            PopupMenuItem(content=Text(f"Pitch: {audio_pitch}")),
+            PopupMenuItem(content=Slider(value=audio_pitch, min=-4, max=4, divisions=21, label="{value}%", on_change=update_audio_pitch)),
+            PopupMenuItem(),
             # PopupMenuItem(text="Item 1"),
             # PopupMenuItem(icon=icons.POWER_INPUT, text="Check power"),
             PopupMenuItem(
@@ -318,6 +365,14 @@ def main(page:Page) -> None:
 
     # Добавляем контент на страницу
     close_button = IconButton(icon=icons.CLOSE,icon_size=30, icon_color="black" if page.theme_mode == ThemeMode.LIGHT else "white", on_click=close_window)
+
+    gTTS(text="ты", lang="ru", slow=False).save('text.mp3')
+    file_path = "text.mp3"
+    try:
+        audio, sr = librosa.load(file_path, sr=None)
+        print("Аудіофайл завантажено успішно!")
+    except Exception as e:
+        print("Помилка при завантаженні аудіофайлу:", e)
 
     page.add(
         Column(

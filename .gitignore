@@ -3,3 +3,7 @@ build/
 *.spec
 theme
 token
+pitch
+text.mp3
+text_pitched.mp3
+dist/
