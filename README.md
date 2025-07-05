@@ -3,6 +3,8 @@ TTS to Microphone(TTStM) - это Text-to-Speech программа, котор�
 
 Основана на: [Python](https://www.python.org/), [Flet](https://flet.dev/) и [telebot](https://pypi.org/project/pyTelegramBotAPI/)
 
+P.S.: код устарел из-за обновления библиотек. я не помню, какие версии библиотек нужны здесь :3
+
 # Download guide
 Заходите в [последний релиз](https://github.com/kamigearx12/TTS-to-Microphone/releases/tag/release)
 
